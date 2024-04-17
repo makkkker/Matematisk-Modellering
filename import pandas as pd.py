@@ -37,6 +37,10 @@ fig, (ax1, ax2) = plt.subplots(2, 1)
 # Tar ut datan för varje individ
 individuals = data['Person'].unique()
 
+time_vector = []
+concentration_vector = []
+
+
 
 for person in individuals:
     # Delar upp datan i person, tid samt koncentration
@@ -44,6 +48,9 @@ for person in individuals:
     time = person_data['Time']
     concentration = person_data['Conc']
     symptom = person_data['Symptom']
+
+    time_vector.extend(time)
+    concentration_vector.extend(concentration)
 
     # Anpassa modellen till data för varje individ
     optimala, kovariansen = curve_fit(exp_decay, time, concentration)
@@ -92,17 +99,35 @@ time1 = person_data['Time']
 concentration1 = person_data['Conc']
 symptom1 = person_data['Symptom']
 
-optimala1, kovariansen1 = curve_fit(exp_decay, time, concentration)
+optimala1, kovariansen1 = curve_fit(exp_decay, time_vector, concentration_vector)
 k1, C01 = optimala1
 
 half_life1 = np.log(2) / k1
 
-spline = UnivariateSpline(time, concentration)
+#spline = UnivariateSpline(time_vector, concentration_vector)
+'''
+spl = make_interp_spline(time_vector, concentration_vector, k=2)
 x_fit = np.linspace(0, 100, 1000)
-spl = make_interp_spline(time, concentration, k=2)
+y_fit = spl(x_fit)
+'''
+
+# Combine time and concentration data into a DataFrame
+data_combined = pd.DataFrame({'Time': time_vector, 'Concentration': concentration_vector})
+
+# Remove duplicate time values by averaging concentration values
+data_unique = data_combined.groupby('Time')['Concentration'].mean().reset_index()
+
+# Sort the data by time
+data_unique_sorted = data_unique.sort_values(by='Time')
+
+# Create the spline
+spl = make_interp_spline(data_unique_sorted['Time'], data_unique_sorted['Concentration'], k=2)
+x_fit = np.linspace(min(data_unique_sorted['Time']), max(data_unique_sorted['Time']), 1000)
 y_fit = spl(x_fit)
 
-plt.scatter(time, concentration)
+
+
+plt.scatter(time_vector, concentration_vector)
 plt.plot(x_fit, y_fit)
 plt.xlabel('tid (h)')
 plt.ylabel('Koncentrationen (mg/l)')
@@ -121,8 +146,6 @@ D = 50*3  # total dos
 integrated_C = integrate.quad(lambda x: exp_decay(x, k1, C01), 0, 10)[0]
 integrated_tC = integrate.quad(lambda x: exp_decay(x, k1, C01) * x, 0, 10)[0]
 
-half_life = np.log(2)/k1
-
 clearence = D / integrated_C
 
 mrt = integrated_tC/integrated_C
@@ -132,7 +155,7 @@ v_d = clearence/k1
 v_ss = clearence * mrt
 
 
-print("Halflife: ", half_life)
+print("Halflife: ", half_life1)
 print("Clearence: ", clearence)
 print("MRT: ", mrt)
 print("V_d: ", v_d)

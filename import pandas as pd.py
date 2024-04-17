@@ -7,6 +7,8 @@ import seaborn as sns
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 from scipy.optimize import curve_fit
+from scipy.interpolate import UnivariateSpline
+from scipy.interpolate import make_interp_spline  
 
 #Läs in data 
 data = pd.read_excel("pk.xlsx")
@@ -47,8 +49,16 @@ for person in individuals:
     # Plotta data oför varje person
     #plt.scatter(time, concentration, label='Person ' + str(person))
 
+    spline = UnivariateSpline(time, concentration)
+    x_fit = np.linspace(min(time), max(time), 1000)
+    spl = make_interp_spline(time, concentration, k=2)
+    y_fit = spl(x_fit)
+
+
     ax1.plot(time, exp_decay(time, k, C0), '--', label='Person ' + str(person-100))
     ax1.scatter(time, concentration,label='Person ' + str(person-100))
+    ax1.plot(x_fit, y_fit)
+    
     #ax1.curve_fit(time, concentration,label='Person ' + str(person-100))
     ax1.set_ylabel('Koncentrationen (mg/liter)')
     #ax1.legend()

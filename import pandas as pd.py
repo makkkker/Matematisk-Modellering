@@ -74,11 +74,31 @@ for person in individuals:
 
 
     # skriver ut parametrarna från modellen för varje individ
-    '''
+    
     print(f'Person nr {person-100}:')
-    print('k:', k)
+    print('Lambda:', k)
     print('Halveringstid:', half_life, 'timmar')
     print()
-    '''
+    
 plt.grid()
 plt.show()
+
+
+person_data1 = data[data['Person'] == person]
+time1 = person_data['Time']
+concentration1 = person_data['Conc']
+symptom1 = person_data['Symptom']
+
+spline = UnivariateSpline(time, concentration)
+x_fit = np.linspace(0, 100, 1000)
+spl = make_interp_spline(time, concentration, k=2)
+y_fit = spl(x_fit)
+
+plt.scatter(time, concentration)
+plt.plot(x_fit, y_fit)
+plt.xlabel('tid (h)')
+plt.ylabel('Koncentrationen (mg/l)')
+plt.grid()
+plt.show()
+
+

@@ -1,3 +1,4 @@
+# %%
 import numpy as np
 import scipy.stats as stats
 import statistics
@@ -10,6 +11,7 @@ from scipy.optimize import curve_fit
 from scipy.interpolate import UnivariateSpline
 from scipy.interpolate import make_interp_spline  
 
+# %%
 #Läs in data 
 data = pd.read_excel("pk.xlsx")
 #Data från olika kolumner
@@ -31,6 +33,7 @@ fig, (ax1, ax2) = plt.subplots(2,1)
 
 #Tar ut datan för varje individ
 individuals = data['Person'].unique()
+
 
 for person in individuals:
     #Delar upp datan i person, tid samt koncentration
@@ -84,10 +87,16 @@ plt.grid()
 plt.show()
 
 
+# %%
 person_data1 = data[data['Person'] == person]
 time1 = person_data['Time']
 concentration1 = person_data['Conc']
 symptom1 = person_data['Symptom']
+
+optimala1, kovariansen1 = curve_fit(exp_decay, time, concentration)
+k1, C01 = optimala1
+
+half_life1 = np.log(2) / k1
 
 spline = UnivariateSpline(time, concentration)
 x_fit = np.linspace(0, 100, 1000)
@@ -98,7 +107,15 @@ plt.scatter(time, concentration)
 plt.plot(x_fit, y_fit)
 plt.xlabel('tid (h)')
 plt.ylabel('Koncentrationen (mg/l)')
-plt.grid()
+
+
+print('Uppskattade gemensam parameter')
+print('lambda', k1)
+print('Halveringstid:', half_life1, 'timmar')
+print()
+
+plt.grid(True)
 plt.show()
+# %%
 
 

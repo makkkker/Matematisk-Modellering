@@ -32,6 +32,14 @@ def exp_decay(t, k, C0):
     return C0 * np.exp(-k * t)
 
 
+def linear(t, a, b):
+    return a*t+b
+
+
+def log(t, k, C):
+    return C*np.log(k*t)
+
+
 half_life_vec = []
 clearence_vec = []
 mrt_vec = []
@@ -39,14 +47,33 @@ v_d_vec = []
 v_ss_vec = []
 
 
-fig, (ax1, ax2) = plt.subplots(2, 1)
-
 # Tar ut datan för varje individ
 individuals = data['Person'].unique()
 
 time_vector = []
 concentration_vector = []
+symp_vector = []
 
+
+individual_conc = data['Conc']
+individual_symp = data['Symptom']
+
+symp_vector.extend(individual_symp)
+concentration_vector.extend(individual_conc)
+
+optimala_symp, kovariansen_symp = curve_fit(
+    linear, symp_vector, concentration_vector)
+a, b = optimala_symp
+
+conc_lin = np.linspace(0, max(concentration_vector), 1000)
+
+
+plt.scatter(individual_conc, individual_symp)
+plt.plot(linear(conc_lin, a, b), conc_lin)
+plt.show()
+
+
+fig, (ax1, ax2) = plt.subplots(2, 1)
 
 for person in individuals:
     # Delar upp datan i person, tid samt koncentration
@@ -92,9 +119,9 @@ for person in individuals:
 
     D = 50*3  # total dos
 
-    integrated_C = integrate.quad(lambda x: exp_decay(x, k, C0), 0, 10)[0]
+    integrated_C = integrate.quad(lambda x: exp_decay(x, k, C0), 0, 1000)[0]
     integrated_tC = integrate.quad(
-        lambda x: exp_decay(x, k, C0) * x, 0, 10)[0]
+        lambda x: exp_decay(x, k, C0) * x, 0, 1000)[0]
 
     clearence = D / integrated_C
 
@@ -185,8 +212,8 @@ plt.show()
 
 D = 50*3  # total dos
 
-integrated_C = integrate.quad(lambda x: exp_decay(x, k1, C01), 0, 10)[0]
-integrated_tC = integrate.quad(lambda x: exp_decay(x, k1, C01) * x, 0, 10)[0]
+integrated_C = integrate.quad(lambda x: exp_decay(x, k1, C01), 0, 1000)[0]
+integrated_tC = integrate.quad(lambda x: exp_decay(x, k1, C01) * x, 0, 1000)[0]
 
 clearence = D / integrated_C
 

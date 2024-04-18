@@ -36,7 +36,7 @@ def linear(t, a, b):
     return a*t+b
 
 
-def log(t, k, C):
+def log_own(t, k, C):
     return C*np.log(k*t)
 
 
@@ -47,14 +47,11 @@ v_d_vec = []
 v_ss_vec = []
 
 
-# Tar ut datan för varje individ
-individuals = data['Person'].unique()
-
 time_vector = []
 concentration_vector = []
 symp_vector = []
 
-
+# %%
 individual_conc = data['Conc']
 individual_symp = data['Symptom']
 
@@ -67,11 +64,13 @@ a, b = optimala_symp
 
 conc_lin = np.linspace(0, max(concentration_vector), 1000)
 
-
 plt.scatter(individual_conc, individual_symp)
 plt.plot(linear(conc_lin, a, b), conc_lin)
 plt.show()
+# %%
 
+# Tar ut datan för varje individ
+individuals = data['Person'].unique()
 
 fig, (ax1, ax2) = plt.subplots(2, 1)
 
@@ -83,7 +82,6 @@ for person in individuals:
     symptom = person_data['Symptom']
 
     time_vector.extend(time)
-    concentration_vector.extend(concentration)
 
     # Anpassa modellen till data för varje individ
     optimala, kovariansen = curve_fit(exp_decay, time, concentration)

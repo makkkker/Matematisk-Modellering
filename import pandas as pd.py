@@ -32,6 +32,13 @@ def exp_decay(t, k, C0):
     return C0 * np.exp(-k * t)
 
 
+half_life_vec = []
+clearence_vec = []
+mrt_vec = []
+v_d_vec = []
+v_ss_vec = []
+
+
 fig, (ax1, ax2) = plt.subplots(2, 1)
 
 # Tar ut datan för varje individ
@@ -39,7 +46,6 @@ individuals = data['Person'].unique()
 
 time_vector = []
 concentration_vector = []
-
 
 
 for person in individuals:
@@ -84,12 +90,44 @@ for person in individuals:
 
     # skriver ut parametrarna från modellen för varje individ
 
+    D = 50*3  # total dos
+
+    integrated_C = integrate.quad(lambda x: exp_decay(x, k, C0), 0, 10)[0]
+    integrated_tC = integrate.quad(
+        lambda x: exp_decay(x, k, C0) * x, 0, 10)[0]
+
+    clearence = D / integrated_C
+
+    mrt = integrated_tC/integrated_C
+
+    v_d = clearence/k
+
+    v_ss = clearence * mrt
+
+    half_life_vec.append(half_life)
+    clearence_vec.append(clearence)
+    mrt_vec.append(mrt)
+    v_d_vec.append(v_d)
+    v_ss_vec.append(v_ss)
+
     print(f'Person nr {person-100}:')
     print('Lambda:', k)
-    print('Halveringstid:', half_life, 'timmar')
+    print("Halflife: ", half_life)
+    print("Clearence: ", clearence)
+    print("MRT: ", mrt)
+    print("V_d: ", v_d)
+    print("V_ss: ", v_ss)
     print()
 
 plt.grid()
+plt.show()
+
+value_dict = {'Halflife': half_life_vec, 'Clearence': clearence_vec,
+              "MRT": mrt_vec, 'Vd': v_d_vec, 'Vss': v_ss_vec}
+
+fig, ax = plt.subplots()
+ax.boxplot(value_dict.values())
+ax.set_xticklabels(value_dict.keys())
 plt.show()
 
 
@@ -99,12 +137,13 @@ time1 = person_data['Time']
 concentration1 = person_data['Conc']
 symptom1 = person_data['Symptom']
 
-optimala1, kovariansen1 = curve_fit(exp_decay, time_vector, concentration_vector)
+optimala1, kovariansen1 = curve_fit(
+    exp_decay, time_vector, concentration_vector)
 k1, C01 = optimala1
 
 half_life1 = np.log(2) / k1
 
-#spline = UnivariateSpline(time_vector, concentration_vector)
+# spline = UnivariateSpline(time_vector, concentration_vector)
 '''
 spl = make_interp_spline(time_vector, concentration_vector, k=2)
 x_fit = np.linspace(0, 100, 1000)
@@ -112,19 +151,22 @@ y_fit = spl(x_fit)
 '''
 
 # Combine time and concentration data into a DataFrame
-data_combined = pd.DataFrame({'Time': time_vector, 'Concentration': concentration_vector})
+data_combined = pd.DataFrame(
+    {'Time': time_vector, 'Concentration': concentration_vector})
 
 # Remove duplicate time values by averaging concentration values
-data_unique = data_combined.groupby('Time')['Concentration'].mean().reset_index()
+data_unique = data_combined.groupby(
+    'Time')['Concentration'].mean().reset_index()
 
 # Sort the data by time
 data_unique_sorted = data_unique.sort_values(by='Time')
 
 # Create the spline
-spl = make_interp_spline(data_unique_sorted['Time'], data_unique_sorted['Concentration'], k=2)
-x_fit = np.linspace(min(data_unique_sorted['Time']), max(data_unique_sorted['Time']), 1000)
+spl = make_interp_spline(
+    data_unique_sorted['Time'], data_unique_sorted['Concentration'], k=2)
+x_fit = np.linspace(min(data_unique_sorted['Time']), max(
+    data_unique_sorted['Time']), 1000)
 y_fit = spl(x_fit)
-
 
 
 plt.scatter(time_vector, concentration_vector)

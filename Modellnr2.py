@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from scipy.optimize import minimize
+from scipy.integrate import quad
 import matplotlib.pyplot as plt
 
 #%%
@@ -45,13 +46,32 @@ for person in data['Person'].unique():
 time_space = np.linspace(0, 100, 1000)
 #Använder dessa parametrar (Man ska nog använda andra) för att plotta funktionen
 params = [24.41072424, -23.71260049, 26.63106566, 0.12670922, 1.15457906, 1.18363399]
-concenctration_plot = model(time_space, params)
+concentration_plot = model(time_space, params)
 
 #Plottar datapunkter 
 plt.scatter(time_vec, conc_vec)
 #Plottar funktionen efter de valda parametrarna 
-plt.plot(time_space, concenctration_plot)
+plt.plot(time_space, concentration_plot)
 plt.xlabel('Tid')
 plt.ylabel('Koncentration')
 plt.grid()
 plt.show()
+
+#Arean
+AUC= np.trapz(concentration_plot, time_space)
+print('AUC:', AUC)
+
+#Clearance
+CL = 150 / AUC
+print('Clearance:', CL)
+
+#Mean residence time
+MRT = np.trapz(time_space*concentration_plot, time_space)/AUC
+print('MRT: ', MRT)
+
+#Volym i steady state
+Vss = CL*MRT
+print('Vss: ', Vss)
+
+
+# %%

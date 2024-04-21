@@ -1,77 +1,82 @@
 import pandas as pd
 import numpy as np
 from scipy.optimize import minimize
+from scipy.optimize import curve_fit
 from scipy.integrate import quad
 import matplotlib.pyplot as plt
 
 #%%
 data = pd.read_excel("pk.xlsx")
 
-#Definera modell
-def model(t, vec):
-    A, B, F, ka, lam, mu = vec
+#Def modell
+def modelnr2(t, F, A, B, ka, lam, mu):
     return (F * ka * A * (np.exp(-lam * t) - np.exp(-ka * t))/ (ka - lam) + 
             F * ka * B  * (np.exp(-mu * t) - np.exp(-ka * t))/ (ka - mu))
 
-#Minsta kvadratmetoden
-def minimera(vec, t, y):
-    return np.mean((y - model(t, vec))**2)
+fittedCurve = []
+vec_guess = [0.4, 5, 5, 0.5, 0.09, 0.3]
 
-#Lista på parametrar för varje person
-results = {}
-
-time_vec = []
-conc_vec = []
-
-#Gissar parametervärden
-vec_guess = [16, 0.5, 0, 0.1, 2, 3]
-
-#Itererar igenom varje person i datan
+#Itererar igenom varje individ
 for person in data['Person'].unique(): 
-    #Plockar ut data för varje individ
+    fittedCurve.append([])
+
     person_data = data[data['Person'] == person]
-    time = person_data['Time']
-    time_vec.extend(time)
-    concentration = person_data['Conc']
-    conc_vec.extend(concentration)
-    #Här används minsta kvadratmetoden för att hitta parametrar för varje individ
-    res = minimize(minimera, vec_guess, args=(time, concentration))
-    #Här läggs parametrarna till i results 
-    results[person] = res.x
-    #Skriver ut parametrar för varje person
-    print(f'Person {person-100}: {res.x}')
+    time = person_data['Time'].to_numpy()
+    concentration = person_data['Conc'].to_numpy()
+    
+    #Tar maxvärdet av konc. för varje invdivid och startar därifrån 
+    maxindex = concentration.argmax()
+    time = time[maxindex: ]
+    concentration = concentration[maxindex: ]
+    time_space = np.linspace(time[0], 96, 10000)
+    params1, params1_cov = curve_fit(modelnr2, time, concentration, vec_guess)
 
-#%%
-#Skapar ett tidsspann
-time_space = np.linspace(0, 100, 1000)
-#Använder dessa parametrar (Man ska nog använda andra) för att plotta funktionen
-params = [24.41072424, -23.71260049, 26.63106566, 0.12670922, 1.15457906, 1.18363399]
-concentration_plot = model(time_space, params)
+    #appendar varje inviduella funktion och plottar 
+    for t in time_space: 
+        fittedCurve[person-101].append(modelnr2(t,*params1))
+    plt.plot(time_space, fittedCurve[person-101])
+    plt.scatter(time, concentration)
+    print(f'Person {person-100}: F={params1[0]} A={params1[1]} B={params1[2]} ka={params1[3]} lamda={params1[4]} mu={params1[5]}')
 
-#Plottar datapunkter 
-plt.scatter(time_vec, conc_vec)
-#Plottar funktionen efter de valda parametrarna 
-plt.plot(time_space, concentration_plot)
-plt.xlabel('Tid')
-plt.ylabel('Koncentration')
+AUC = []
+MRT = []
+Clearence = []
+Vss = []
+
+#Inte klar med konstanterna 
+for person in fittedCurve:
+    AUC.append(np.trapz(person,time_space))
+    
+
+print(AUC + '\n')
+
+plt.xlabel('Tid(h)')
+plt.ylabel('Koncentration (mg/l)')
+plt.grid()
+plt.show()
+# %%
+#Sammma som innan med jag börjar från 0 och inte maxkoncentrationen
+fittedCurve1 = []
+for person in data['Person'].unique(): 
+    fittedCurve1.append([])
+
+    person_data = data[data['Person'] == person]
+    time = person_data['Time'].to_numpy()
+    concentration = person_data['Conc'].to_numpy()
+
+    time_space1 = np.linspace(0, 96, 10000)
+    params, params_cov = curve_fit(modelnr2, time, concentration, vec_guess)
+
+    for t in time_space1: 
+        fittedCurve1[person-101].append(modelnr2(t,*params))
+    plt.plot(time_space, fittedCurve1[person-101])
+    print(f'Person {person-100}: F={params[0]} A={params[1]} B={params[2]} ka={params[3]} lamda={params[4]} mu={params[5]}')
+
+plt.xlabel('Tid(h)')
+plt.ylabel('Koncentration (mg/l)')
 plt.grid()
 plt.show()
 
-#Arean
-AUC= np.trapz(concentration_plot, time_space)
-print('AUC:', AUC)
-
-#Clearance
-CL = 150 / AUC
-print('Clearance:', CL)
-
-#Mean residence time
-MRT = np.trapz(time_space*concentration_plot, time_space)/AUC
-print('MRT: ', MRT)
-
-#Volym i steady state
-Vss = CL*MRT
-print('Vss: ', Vss)
-
-
 # %%
+
+

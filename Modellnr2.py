@@ -4,17 +4,18 @@ from scipy.optimize import minimize
 from scipy.optimize import curve_fit
 from scipy.integrate import quad
 import matplotlib.pyplot as plt
+from operator import truediv
 
 #%%
 data = pd.read_excel("pk.xlsx")
 
 #Def modell
-def modelnr2(t, F, A, B, ka, lam, mu):
-    return (F * ka * A * (np.exp(-lam * t) - np.exp(-ka * t))/ (ka - lam) + 
-            F * ka * B  * (np.exp(-mu * t) - np.exp(-ka * t))/ (ka - mu))
+def modelnr2(t, FA, FB, ka, lam, mu):
+    return (FA * ka  * (np.exp(-lam * t) - np.exp(-ka * t))/ (ka - lam) + 
+            FB * ka * (np.exp(-mu * t) - np.exp(-ka * t))/ (ka - mu))
 
 fittedCurve = []
-vec_guess = [0.4, 5, 5, 0.5, 0.09, 0.3]
+vec_guess = [2, 2, 0.5, 0.09, 0.3]
 
 #Itererar igenom varje individ
 for person in data['Person'].unique(): 
@@ -34,9 +35,9 @@ for person in data['Person'].unique():
     #appendar varje inviduella funktion och plottar 
     for t in time_space: 
         fittedCurve[person-101].append(modelnr2(t,*params1))
-    plt.plot(time_space, fittedCurve[person-101])
+    plt.plot(time_space, fittedCurve[person-101], label='Person ' + str(person-100))
     plt.scatter(time, concentration)
-    print(f'Person {person-100}: F={params1[0]} A={params1[1]} B={params1[2]} ka={params1[3]} lamda={params1[4]} mu={params1[5]}')
+    print(f'Person {person-100}: FA = {params1[0]} FB = {params1[1]} ka = {params1[2]} lamda = {params1[3]} mu = {params1[4]} \n')
 
 AUC = []
 MRT = []
@@ -46,13 +47,36 @@ Vss = []
 #Inte klar med konstanterna 
 for person in fittedCurve:
     AUC.append(np.trapz(person,time_space))
-    
+    Clearence.append(150)
+    MRT.append(np.trapz(time_space*person,time_space))
 
-print(AUC + '\n')
+Clearence = list(map(truediv, Clearence, AUC))
+Vss = np.multiply(Clearence,MRT)
+
+#for i in range(10):
+   # print(f'Person nr {i+1}: Clearence = {Clearence[i]} AUC = {AUC[i]} MRT = {MRT[i]} Vss = {Vss[i]} \n')
+
+table_data = []
+colors = []
+
+for i in range(10):
+    table_data.append(["Person nr. " + str(i+1), round(Clearence[i],4), round(AUC[i],4), round(MRT[i],4), round(Vss[i],4)])
+    person_color = plt.gca().get_lines()[i].get_color()
+    colors.append(person_color)
+
 
 plt.xlabel('Tid(h)')
 plt.ylabel('Koncentration (mg/l)')
+plt.legend()
 plt.grid()
+
+table = plt.table(cellText=table_data,loc='top', cellLoc='center',colLabels=['Person', 'Clearence', 'AUC', 'MRT', 'Vss'], bbox=[1,0,1.1,1])
+'''
+for i, cell in enumerate(table.get_celld().values()): 
+    if i % 5 == 0:
+        continue
+    cell.set_facecolor(colors[(i)//5])
+'''
 plt.show()
 # %%
 #Sammma som innan med jag börjar från 0 och inte maxkoncentrationen
@@ -70,13 +94,10 @@ for person in data['Person'].unique():
     for t in time_space1: 
         fittedCurve1[person-101].append(modelnr2(t,*params))
     plt.plot(time_space, fittedCurve1[person-101])
-    print(f'Person {person-100}: F={params[0]} A={params[1]} B={params[2]} ka={params[3]} lamda={params[4]} mu={params[5]}')
+    print(f'Person {person-100}: FA={params[0]} FB={params[1]} ka={params[2]} lambda={params[3]} mu={params[4]}')
 
 plt.xlabel('Tid(h)')
 plt.ylabel('Koncentration (mg/l)')
 plt.grid()
 plt.show()
-
-# %%
-
 

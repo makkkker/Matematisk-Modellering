@@ -47,8 +47,8 @@ for person in data['Person'].unique():
     plt.plot(time_space, fittedCurve[person-101],
              label='Person ' + str(person-100))
     plt.scatter(time, concentration)
-    print(
-        f'Person {person-100}: FA = {params1[0]} FB = {params1[1]} ka = {params1[2]} lamda = {params1[3]} mu = {params1[4]} \n')
+    # print(
+    #    f'Person {person-100}: FA = {params1[0]} FB = {params1[1]} ka = {params1[2]} lamda = {params1[3]} mu = {params1[4]} \n')
 
 
 Halflife = []
@@ -83,6 +83,13 @@ Vss = np.multiply(Clearence, MRT)
 for i in range(10):
     print(
         f'Person nr {i+1}: Clearence = {Clearence[i]} AUC = {AUC[i]} MRT = {MRT[i]} Vss = {Vss[i]} Halflife= {Halflife[i]}\n')
+
+Results = [Halflife, AUC, MRT, Clearence, Vss]
+Results_names = ["Halflife", "AUC", "MRT", "Clearence", "Vss"]
+
+for i in range(5):
+    print(
+        f'{Results_names[i]}:   Min: {min(Results[i])} " Max: {max(Results[i])} Mean: {np.mean(Results[i])}  STD: {np.std(Results[i])}')
 
 table_data = []
 colors = []
@@ -124,8 +131,8 @@ for person in data['Person'].unique():
     for t in time_space1:
         fittedCurve1[person-101].append(modelnr2(t, *params))
     plt.plot(time_space, fittedCurve1[person-101])
-    print(
-        f'Person {person-100}: FA={params[0]} FB={params[1]} ka={params[2]} lambda={params[3]} mu={params[4]}')
+    # print(
+    #    f'Person {person-100}: FA={params[0]} FB={params[1]} ka={params[2]} lambda={params[3]} mu={params[4]}')
 
 plt.xlabel('Tid(h)')
 plt.ylabel('Koncentration (mg/l)')

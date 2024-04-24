@@ -7,6 +7,7 @@ from scipy.integrate import quad
 import matplotlib.pyplot as plt
 from operator import truediv
 from scipy.stats import linregress
+import statsmodels.api as sm
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # %%
 # läser data
@@ -108,7 +109,7 @@ for i in range(10):
     table_data.append(["Person nr. " + str(i+1), round(Clearence[i], 4),
                       round(AUC[i], 4), round(MRT[i], 4), round(Vss[i], 4)])
 
-plt.xlabel('Tid(h)')
+plt.xlabel('Tid (h)')
 plt.ylabel('Koncentration (mg/l)')
 plt.legend()
 plt.grid()
@@ -117,8 +118,19 @@ table = plt.table(cellText=table_data, loc='top', cellLoc='center', colLabels=[
                   'Person', 'Clearence', 'AUC', 'MRT', 'Vss', 'Half-life'], bbox=[1, 0, 1.1, 1])
 plt.show()
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# %%
+# Skriv ut min, max, mean och std för alla parametrar
 
 
+Results = [half_life_vec, AUC, MRT, Clearence, Vss]
+Results_names = ["Halflife", "AUC", "MRT", "Clearence", "Vss"]
+
+for i in range(5):
+    print(
+        f'{Results_names[i]}:   Min: {min(Results[i])}  Max: {max(Results[i])} Mean: {np.mean(Results[i])}  STD: {np.std(Results[i])}')
+
+
+# ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # %%
 # Sammma som innan med jag börjar från 0 och inte maxkoncentrationen
 half_life_vec0 = []
@@ -198,7 +210,7 @@ print(f'FA={comb_par[0]} FB={comb_par[1]} ka={comb_par[2]} lambda(eliminationsha
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # %%
-# Simulerar en given dosering( hur mycket, hur ofta, hur många samt parametrar från model)
+# Simulerar en given dosering (hur mycket, hur ofta, hur många samt parametrar från model)
 
 
 def simulation(dose_amount, dose_interval, num_doses, model_params):
@@ -239,6 +251,31 @@ plt.ylabel('Koncentration (mg/l)')
 plt.grid(True)
 plt.show()
 
-# ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# %%
+individual_conc = data['Conc']
+individual_symp = data['Symptom']
+
+concentration_vector = []
+symp_vector = []
+
+symp_vector.extend(individual_symp)
+concentration_vector.extend(individual_conc)
+
+optimala_symp, kovariansen_symp = curve_fit(
+    linear, symp_vector, concentration_vector)
+a, b = optimala_symp
+
+conc_lin = np.linspace(0, max(concentration_vector), 1000)
+
+
+plt.scatter(individual_conc, individual_symp, color='red')
+plt.plot(linear(conc_lin, a, b), conc_lin)
+plt.xlim(0, max(concentration_vector))
+plt.ylim(0, max(symp_vector)+0.1)
+plt.xlabel('Koncentration (mg/l)')
+plt.ylabel('Symptomgrad')
+
+plt.show()
 
 # %%

@@ -89,7 +89,7 @@ Results_names = ["Halflife", "AUC", "MRT", "Clearence", "Vss"]
 
 for i in range(5):
     print(
-        f'{Results_names[i]}:   Min: {min(Results[i])} " Max: {max(Results[i])} Mean: {np.mean(Results[i])}  STD: {np.std(Results[i])}')
+        f'{Results_names[i]}:   Min: {min(Results[i])}  Max: {max(Results[i])} Mean: {np.mean(Results[i])}  STD: {np.std(Results[i])}')
 
 table_data = []
 colors = []

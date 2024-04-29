@@ -184,12 +184,9 @@ elimination = comb_par[3]
 print(f'FA={comb_par[0]} FB={comb_par[1]} ka={comb_par[2]} lambda(eliminationshastigen)={comb_par[3]} mu={comb_par[4]} halvering= {half_life_comb}')
 
 #----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-for p in params_list:
-    print(p)
 # %%
 #Simulerar en given dosering( hur mycket, hur ofta, hur många samt parametrar från model)
 def simulation(dose, dose_interval, params_list, time_points):
-  
     concentrations = np.zeros_like(time_points)  
     for params in params_list:
         FA, FB, ka, lam, mu = params
@@ -218,4 +215,64 @@ if __name__ == "__main__":
     plt.show()
     #----------------------------------------------------------------------------------------------------------------------------------------------------
 
+# %%
+def simulation(dose, dose_interval, params_list, time_points):
+    concentrations = np.zeros_like(time_points)  
+    for params in params_list:
+        FA, FB, ka, lam, mu = params
+        for i in range(96//dose_interval):
+            dose_time = i * dose_interval
+            time_after_dose = time_points - dose_time
+            time_after_dose[time_after_dose < 0] = 0
+            dose_concentration = model(time_after_dose, FA, FB, ka, lam, mu)*(dose/150)
+            concentrations += dose_concentration  
+    return time_points, concentrations
+
+if __name__ == "__main__":
+    time_points = np.linspace(0, 96, 1000)
+    doses_to_simulate = [5, 10, 15, 20, 40] 
+    plt.figure(figsize=(10, 6))
+    for dose in doses_to_simulate:
+        _, concentrations = simulation(dose, dose_interval=12, params_list=params_list, time_points=time_points)
+        plt.plot(time_points, concentrations, label=f'Dos: {dose} mg')
+
+    plt.xlabel('Tid (h)')
+    plt.ylabel('Koncentration (mg/L)')
+    plt.title('Koncetration av profylax med dosering varje 12 timmar')
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+#%% 
+def simulation2(dose1, dose2, dose_interval, params_list, time_points):
+    concentrations = np.zeros_like(time_points)  
+    for params in params_list:
+        FA, FB, ka, lam, mu = params
+        for i in range(96//dose_interval):
+            dose_time = i * dose_interval
+            time_after_dose = time_points - dose_time
+            time_after_dose[time_after_dose < 0] = 0
+            if i ==0: 
+                dose = dose1
+            else: 
+                dose = dose2
+            dose_concentration = model(time_after_dose, FA, FB, ka, lam, mu)*(dose/150)
+            concentrations += dose_concentration  
+    return time_points, concentrations
+
+if __name__ == "__main__":
+    time_points = np.linspace(0, 96, 1000)
+    dose1 = [5, 10, 20, 40]
+    dose2 = 11
+    plt.figure(figsize=(10, 6))
+    for d in dose1:
+        _, concentrations = simulation2(d, dose2, dose_interval=12, params_list=params_list, time_points=time_points)
+        plt.plot(time_points, concentrations, label=f'Dos1: {d} mg, dos2: {dose2} mg')
+
+    plt.xlabel('Tid (h)')
+    plt.ylabel('Koncentration (mg/L)')
+    plt.title('Dosering var 12:te timme för en initialdos samt en koninuerlig dosering efter')
+    plt.legend()
+    plt.grid()
+    plt.show()
 # %%
